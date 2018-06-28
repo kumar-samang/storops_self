@@ -123,3 +123,6 @@ class Ansible:
             return "Fio is running"
 
         
+	@classmethod
+	def win_fio():
+		pass
