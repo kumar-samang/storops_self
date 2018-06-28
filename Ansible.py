@@ -65,7 +65,7 @@ class Ansible:
 
 
         @classmethod
-        def mount_win(cifs_server, domain_name, share_name, domain_user, domain_password, node, path = '/root/win_environment/hosts',timeout_in_sec = 100):
+        def mount_win(self,cifs_server, domain_name, share_name, domain_user, domain_password, node, path = '/root/win_environment/hosts',timeout_in_sec = '100'):
             win_ping = "ansible {} -i  {} -m win_ping".format(node,path)
             ping_value = subprocess.check_output(win_ping,shell = True)
             ip = re.findall( r'[0-9]+(?:\.[0-9]+){3}', ping_value )
@@ -77,35 +77,49 @@ class Ansible:
             return out
 
         @classmethod
-        def mount_smb1_linux(interface_ip, share_name, username, password, node, mount_dir = 'smb1_test'):
-            dir = "ansible {} -m shell -a 'mkdir /mnt/{}'".format(node,mount_dir)
-            create_dirs =  subprocess.check_output(dir, shell=True)
+        def mount_smb1_linux(self,interface_ip, share_name, username, password, node, mount_dir = 'smb1_test'):
+            dirs = "ansible {} -m shell -a 'mkdir /mnt/{}'".format(node,mount_dir)
+            create_dirs =  subprocess.check_output(dirs, shell=True)
             mount_linux = "ansible {} -m shell -a ' mount -t cifs //{}/{} /mnt/{} -o sec=ntlm,username={},password={},vers=1.0'".format(node, interface_ip, share_name, mount_dir, username, password)
             mount_linuxs = subprocess.check_output(mount_linux, shell=True)
             print "SMB2 connection Establishing and the mounted dir is :"+"/mnt/"+mount_dir
 
         @classmethod
-        def mount_smb2_linux(interface_ip, share_name, username, password, node, mount_dir = 'smb2_test'):
-            dir = "ansible {} -m shell -a 'mkdir /mnt/{}'".format(node,mount_dir)
-            create_dirs =  subprocess.check_output(dir, shell=True)
+        def mount_smb2_linux(self,interface_ip, share_name, username, password, node, mount_dir = 'smb2_test'):
+            dirs = "ansible {} -m shell -a 'mkdir /mnt/{}'".format(node,mount_dir)
+            create_dirs =  subprocess.check_output(dirs, shell=True)
             mount_linux = "ansible {} -m shell -a ' mount -t cifs //{}/{} /mnt/{} -o sec=ntlm,username={},password={},vers=2.0'".format(node, interface_ip, share_name, mount_dir, username, password)
             mount_linuxs = subprocess.check_output(mount_linux, shell=True)
             print "SMB2 connection Establishing and the mounted dir is :"+"/mnt/"+mount_dir
 
 
         @classmethod
-        def mount_smb3_linux(interface_ip, share_name, username, password, node, mount_dir = 'smb3_test'):
-            dir = "ansible {} -m shell -a 'mkdir /mnt/{}'".format(node,mount_dir)
-            create_dirs =  subprocess.check_output(dir, shell=True)
+        def mount_smb3_linux(self,interface_ip, share_name, username, password, node, mount_dir = 'smb3_test'):
+            dirs = "ansible {} -m shell -a 'mkdir /mnt/{}'".format(node,mount_dir)
+            create_dirs =  subprocess.check_output(dirs, shell=True)
             mount_linux = "ansible {} -m shell -a ' mount -t cifs //{}/{} /mnt/{} -o sec=ntlm,username={},password={},vers=3.0'".format(node, interface_ip, share_name, mount_dir, username, password)
             mount_linuxs = subprocess.check_output(mount_linux, shell=True)
             print "SMB2 connection Establishing and the mounted dir is :"+"/mnt/"+mount_dir
 
         @classmethod
-        def mount_smb_linux(interface_ip, share_name, username, password, node, mount_dir = 'smb_test',vers):
+        def mount_smb_linux(self,interface_ip, share_name, username, password, node, vers, mount_dir = 'smb_test'):
             mount_dir = mount_dir+'_'+vers
-            dir = "ansible {} -m shell -a 'mkdir /mnt/{}'".format(node,mount_dir)
-            create_dirs =  subprocess.check_output(dir, shell=True)
+            dirs = "ansible {} -m shell -a 'mkdir /mnt/{}'".format(node,mount_dir)
+            create_dirs =  subprocess.check_output(dirs, shell=True)
             mount_linux = "ansible {} -m shell -a ' mount -t cifs //{}/{} /mnt/{} -o sec=ntlm,username={},password={},vers={}'".format(node, interface_ip, share_name, mount_dir, username, password,vers)
             mount_linuxs = subprocess.check_output(mount_linux, shell=True)
             print "SMB2 connection Establishing and the mounted dir is :"+"/mnt/"+mount_dir
+
+        @classmethod
+        def linux_fio(self, node, size, dirs, runtime_in_sec='605000', bs='8k'):
+            io_str = "echo -e '[global]\\nioengine=libaio\\ndirect=1\\nrefill_buffers=1\\nrw=write\\ndo_verify=1\\nexitall_on_error=1\\nfallocate=none\\ntime_based=1\\nsize={}\\nruntime={} \\n \\n[dir-testio] \\ndirectory={}\\nbs={}'".format(size,runtime_in_sec,dirs,bs).strip()
+            fio_profile = io_str+" > /profile.fio"
+            create_fio_profile = "ansible {} -m shell -a \"{}\"".format(node,fio_profile)
+            print create_fio_profile
+            fio_profile = subprocess.check_output(create_fio_profile,shell=True)
+            print fio_profile
+            run_fio = "ansible {} -m shell -a 'fio /profile.fio'".format(node)
+            run_fio = subprocess.check_output(run_fio,shell =True)
+            return "Fio is running"
+
+        
